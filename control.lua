@@ -428,7 +428,9 @@ script.on_event(defines.events.on_tick, function(event)
 			local surface = get_surface(structure.parent) --game.surfaces[surface_name]
 			local parent_surface = structure.parent.surface
 			local layout = get_layout(surface)
+			local pconn_index = 0
 			for id, pconn in pairs(layout.possible_connections) do
+				pconn_index = pconn_index + 1
 				sconn = structure.connections[id]
 				if sconn then
 					if sconn.outside.valid and sconn.inside.valid then
@@ -449,20 +451,16 @@ script.on_event(defines.events.on_tick, function(event)
 								sconn.from,
 								sconn.to
 							)
-						elseif sconn.conn_type == "wire" then
+						elseif sconn.conn_type == "wire" and (structure.ticks + sconn.tick_offset) % 60 < 1 then
 							-- This will use red if connected else green if connected. only one wire ever gets mirrored.
 							local rxNet = sconn.from.get_circuit_network(defines.wire_type.red) or sconn.from.get_circuit_network(defines.wire_type.green)
 							if rxNet and rxNet.valid then 
 								local txControl = sconn.to.get_or_create_control_behavior()
-								local txSignals = {}
+								local txSignals = rxNet.signals
 								local n = 1
-								for _,s in pairs(rxNet.signals) do
-									txSignals[n]={
-										signal = {name=s.signal.name,type=s.signal.type},
-										count = s.count,
-										index = n
-										}
-									n = n+1 
+								for _,s in pairs(txSignals) do
+									s.index = n
+									n = n+1
 								end
 								txControl.parameters={parameters = txSignals}
 							else
@@ -523,13 +521,13 @@ script.on_event(defines.events.on_tick, function(event)
 								dbg("Connecting lamp")
 								local inEntity = place_entity(surface, "combinator-relay-output", pconn.inside_x, pconn.inside_y, structure.parent.force, pconn.direction_in)
 								if inEntity then
-									structure.connections[id] = {from = outEntity, to = inEntity, inside = inEntity, outside = outEntity, conn_type = "wire"}
+									structure.connections[id] = {from = outEntity, to = inEntity, inside = inEntity, outside = outEntity, conn_type = "wire", tick_offset = 23*pconn_index}
 								end
 							elseif outEntity.name == "combinator-relay-output" then
 								dbg("Connecting relay")
 								local inEntity = place_entity(surface, "combinator-relay-input", pconn.inside_x, pconn.inside_y, structure.parent.force, pconn.direction_in)
 								if inEntity then
-									structure.connections[id] = {from = inEntity, to = outEntity, inside = inEntity, outside = outEntity, conn_type = "wire"}
+									structure.connections[id] = {from = inEntity, to = outEntity, inside = inEntity, outside = outEntity, conn_type = "wire", tick_offset = 23*pconn_index}
 								end
 							end
 						end
