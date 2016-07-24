@@ -9,9 +9,13 @@ data:extend({
 				type = "unlock-recipe",
 				recipe = "small-factory"
 			},
-         {
+			{
 				type = "unlock-recipe",
-				recipe = "relay-combinator"
+				recipe = "combinator-relay-output"
+			},
+			{
+				type = "unlock-recipe",
+				recipe = "combinator-relay-input"
 			},
 		},
 		prerequisites = {"steel-processing"},
